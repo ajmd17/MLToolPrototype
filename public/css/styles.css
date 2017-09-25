@@ -1,0 +1,115 @@
+html, body {
+  font-family: sans-serif;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+button {
+  display: block;
+}
+button,
+input[type=submit],
+input[type=file] {
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  width: 350px;
+  text-align: center;
+  font-size: 18px;
+  margin: 4px 0;
+  cursor: pointer;
+  outline: none;
+}
+
+#uploads-section ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+#uploads-section li h4 {
+  display: inline-block;
+  margin: 0;
+  width: 200px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+#uploads-section li a,
+#uploads-section li span {
+  margin: 0;
+  margin-left: 10px;
+}
+
+#input-output-fields {
+  display: flex;
+  flex-direction: row;
+  min-height: 500px;
+}
+#input-output-fields .border {
+  flex-direction: column;
+  width: 25px;
+}
+#input-output-fields #input-table,
+#input-output-fields #output-table {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  resize: none;
+  outline: none;
+}
+
+.right {
+  float: right;
+}
+
+#input-form {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 20px;
+  overflow: auto;
+  background-color: #fafafa;
+}
+#input-form .header {
+  border-bottom: 1px solid #ccc;
+  overflow: auto;
+}
+#input-form .header h3 {
+  float: left;
+  margin: 0;
+  width: 100px;
+  text-align: center;
+}
+#input-form .rows div {
+  min-height: 30px;
+}
+#input-form .rows div > span {
+  float: left;
+  width: 100px;
+  min-height: 30px;
+  border-right: 1px solid #ccc;
+  border-bottom: 1px solid #ddd;
+  box-sizing: border-box;
+}
+#input-form .rows div > span:hover {
+  text-decoration: underline;
+  color: blue;
+  cursor: pointer;
+}
+#input-form .rows div > input[type=text],
+#input-form .header > input[type=text] {
+  float: left;
+  width: 100px;
+  border: 0;
+}
+#input-form  button {
+  display: inline-block;
+  width: auto;
+}
+#input-form #add-col-btn,
+#input-form #add-row-btn {
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: bold;
+}

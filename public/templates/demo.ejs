@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" media="screen" href="/css/handsontable.full.min.css">
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h3>Testing model <%= model.name %></h3>
+
+      <div id="input-form">
+        <div class="header">
+          <button id="add-col-btn" title="Add column">+</button>
+        </div>
+        <div class="rows"></div>
+        <button id="import-csv-btn">Import CSV</button>
+        <button id="export-csv-btn">Export CSV</button>
+        <div class="right">
+          <button id="add-row-btn" title="Add row">+</button>
+        </div>
+      </div>
+
+      <button id="evaluate-btn" data-modelid="<%= model._id %>">
+        Evaluate
+      </button>
+
+      <div id="input-output-fields">
+        <div id="input-table" class="hot handsontable htRowHeaders htColumnHeaders"></div>
+        <!--<textarea id="textarea-input">
+        </textarea>-->
+        <div class="border"></div>
+        <!--<textarea id="textarea-output">
+        </textarea>-->
+        <div id="output-table" class="hot handsontable htRowHeaders htColumnHeaders"></div>
+        
+      </div>
+    </div>
+
+    <script src="/js/jquery-3.2.1.min.js" type="text/javascript"></script>
+    <script src="/js/moment.min.js" type="text/javascript"></script>
+
+    <script src="/js/handsontable.full.min.js"></script>
+    <script src="/js/jquery.handsontable.csv.js"></script>
+
+    <script src="/js/demo.js" type="text/javascript"></script>
+  </body>
+</html>
