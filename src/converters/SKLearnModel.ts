@@ -13,7 +13,7 @@ export default class SKLearnModel extends Convertable<Uint8Array> {
         FunctionName: 'Testing',
         InvocationType: 'RequestResponse'
       }, (err, data) => {
-        console.log({data})
+        console.log({data});
       });
 
     });

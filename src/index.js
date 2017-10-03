@@ -4,10 +4,28 @@ var fs = require('fs');
 var bodyParser = require('body-parser');
 var mongodb = require('mongodb');
 var multer = require('multer');
-var upload = multer({ dest: 'uploads/' });
+import * as multerS3 from 'multer-s3';
 
 var conversions = require('./conversions');
 var evaluate = require('./evaluate');
+
+import { S3 } from 'aws-sdk';
+const s3 = new S3();
+
+var upload = multer({
+  storage: multerS3({
+    s3: s3,
+    bucket: 'mlmodeltestingbucket',
+    metadata: (req, file, cb) => {
+      cb(null, { fieldName: file.fieldname });
+    },
+    key: (req, file, cb) => {
+      cb(null, Date.now().toString())
+    }
+  })
+});
+
+import SKLearnModel from './converters/SKLearnModel';
 
 mongodb.MongoClient.connect('mongodb://localhost:27017/mlmodeltesting', function (err, db) {
   if (err) {
@@ -19,10 +37,10 @@ mongodb.MongoClient.connect('mongodb://localhost:27017/mlmodeltesting', function
 
   app.set('view engine', 'ejs');
 
-  app.set('views', path.join(__dirname, 'public/templates'));
-  app.use('/js', express.static(path.join(__dirname, 'public/js')));
-  app.use('/css', express.static(path.join(__dirname, 'public/css')));
-  app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+  app.set('views', path.join(__dirname, '../public/templates'));
+  app.use('/js', express.static(path.join(__dirname, '../public/js')));
+  app.use('/css', express.static(path.join(__dirname, '../public/css')));
+  app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
   app.get('/', (req, res) => {
     res.render('index');
@@ -127,9 +145,7 @@ mongodb.MongoClient.connect('mongodb://localhost:27017/mlmodeltesting', function
 
   var uploadRouter = express.Router();
 
-  uploadRouter.post('/', multer({
-    dest: 'uploads/tmp/'
-  }).single('model_file'), function (req, res) {
+  uploadRouter.post('/', upload.single('model_file'), function (req, res) {
     if (req.body.modeltype === undefined) {
       return res.status(400).json({
         error: 'modeltype not provided'
@@ -147,6 +163,8 @@ mongodb.MongoClient.connect('mongodb://localhost:27017/mlmodeltesting', function
     switch (req.body.modeltype) {
       case 'sklearn_pickle':
         var newFilepath = `uploads/${req.file.filename}.pmml`;
+        
+        console.log("req.file.buffer = ", req.file.buffer);
         
         conversions.sklearnPickle2PMML(filepath, newFilepath).then(function () {
           db.collection('uploadedmodels').insertOne({
