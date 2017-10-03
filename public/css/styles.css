@@ -91,6 +91,7 @@ input[type=file] {
   border-right: 1px solid #ccc;
   border-bottom: 1px solid #ddd;
   box-sizing: border-box;
+  overflow: hidden;
 }
 #input-form .rows div > span:hover {
   text-decoration: underline;

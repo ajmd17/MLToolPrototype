@@ -63,7 +63,13 @@ mongodb.MongoClient.connect('mongodb://localhost:27017/mlmodeltesting', function
     var csvLines = csv.split('\n');
 
     return csvLines.reduce(function (accum, line, i) {
-      var lineParts = line.split(',');
+      var lineSplit = line.split(',');
+      var lineParts = lineSplit.filter(function (el, i) {
+        if (el.length == 0 && i == lineSplit.length - 1) {
+          return false;
+        }
+        return true;
+      });
 
       if (lineParts.length == 0) {
         return accum;
@@ -73,7 +79,7 @@ mongodb.MongoClient.connect('mongodb://localhost:27017/mlmodeltesting', function
         console.log('part = ', part, i, lineParts.length);
 
         return accum + part + ((i != lineParts.length - 1) ? ',' : '');
-      }) + '\n';
+      }, '') + '\n';
     }, '');
   }
 
