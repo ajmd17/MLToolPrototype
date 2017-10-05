@@ -1,18 +1,14 @@
 import Model from '../Model';
+import S3StoredModel from '../S3StoredModel';
 import ModelSchema from '../ModelSchema';
 import PMMLDataField from './PMMLDataField';
 import { JSONObject } from '../Typedefs';
 
-export default class PMMLModel extends Model<PMMLDataField, string> {
+export default class PMMLModel extends Model<PMMLDataField> {
+  public static SCHEMA_EXTRACTOR_LAMBDA = 'Testing';
+
   merge(other: PMMLModel) {
     return this;
-  }
-
-  serialize(): JSONObject {
-    return {
-      schema: this.schema,
-      data: this.data
-    };
   }
 
   static deserialize(obj: JSONObject) {
@@ -28,7 +24,7 @@ export default class PMMLModel extends Model<PMMLDataField, string> {
       throw new Error("'schema.shape' field missing from serialized JSON object");
     }
 
-    let modelSchema = new ModelSchema<PMMLDataField>();
+    let shape: { [key: string]: PMMLDataField } = {};
 
     for (let key in obj.schema.shape) {
       let dataField = obj.schema.shape[key];
@@ -49,8 +45,10 @@ export default class PMMLModel extends Model<PMMLDataField, string> {
 
       dataFieldObj.validateSelf();
 
-      modelSchema.shape[key] = dataFieldObj;
+      shape[key] = dataFieldObj;
     }
+
+    let modelSchema = new ModelSchema<PMMLDataField>(shape);
 
     return new PMMLModel(modelSchema, obj.data);
   }

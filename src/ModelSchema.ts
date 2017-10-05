@@ -1,9 +1,16 @@
 import DataField from './DataField';
 import InputData from './InputData';
 
+export default class ModelSchema<DataFieldType extends DataField> {
+  constructor(public shape: { [key: string]: DataFieldType }) {}
 
-export default class ModelSchema<DataFieldType> {
-  shape: { [key: string]: DataField };
+  validateSelf(): void {
+    for (let key in this.shape) {
+      if (Object.prototype.hasOwnProperty.call(this.shape, key)) {
+        this.shape[key].validateSelf();
+      }
+    }
+  }
 
   validateInputData(inputData: InputData) {
     let errors: string[] = [];

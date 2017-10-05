@@ -9,8 +9,9 @@ import * as multerS3 from 'multer-s3';
 var conversions = require('./conversions');
 var evaluate = require('./evaluate');
 
-import { S3 } from 'aws-sdk';
-const s3 = new S3();
+import * as AWS from 'aws-sdk';
+AWS.config.loadFromPath(path.join(__dirname, '../aws.config.json'));
+const s3 = new AWS.S3();
 
 var upload = multer({
   storage: multerS3({
@@ -158,10 +159,35 @@ mongodb.MongoClient.connect('mongodb://localhost:27017/mlmodeltesting', function
       });
     }
 
+    const { key } = req.file;
+
     var filepath = req.file.path;
 
     switch (req.body.modeltype) {
       case 'sklearn_pickle':
+        new SKLearnModel(key).getModel().then((pmmlModel) => {
+          return db.collection('uploadedmodels').insertOne({
+            name: req.file.originalname,
+            ...pmmlModel.serialize(),
+            timestamp: new Date(),
+          }).then(function (doc) {
+            console.log('Saved document: ', doc.ops[0]);
+            res.send();
+          }).catch(function (err) {
+            console.error('Failed to store file record in db: ', err);
+            res.status(500).json({
+              error: 'Storage of uploaded model failed.'
+            });
+          });
+        }).catch((err) => {
+          console.error('Failed to convert sklearn model to pmml: ', err);
+          res.status(500).json({
+            error: err.message
+          });
+        });
+
+        return;
+
         var newFilepath = `uploads/${req.file.filename}.pmml`;
         
         console.log("req.file.buffer = ", req.file.buffer);
