@@ -22,7 +22,6 @@ export default class SKLearnModel extends Convertable<Uint8Array> implements S3S
         InvocationType: 'RequestResponse',
         Payload: JSON.stringify({ key: this.key })
       }, (err, data) => {
-        console.log('convertToPmml data = ', data);
         if (err) {
           reject(err);
         } else {
@@ -51,6 +50,12 @@ export default class SKLearnModel extends Convertable<Uint8Array> implements S3S
           // should return data containing s3 key of pmml model
           if (data.StatusCode >= 200 && data.StatusCode < 400) {
             const payload = JSON.parse(data.Payload);
+
+            if (payload.errorMessage) {
+              reject(payload.errorMessage);
+              return;
+            }
+
             const { shape } = payload;
 
             try { assert(shape != null, 'shape not found'); }
@@ -77,8 +82,6 @@ export default class SKLearnModel extends Convertable<Uint8Array> implements S3S
       });
     });
 
-    return convertToPmml()
-      .then((key: string) => extractPmmlSchema(key)
-        .then((schema) => new PMMLModel(schema, key)));
+    return convertToPmml().then((key: string) => PMMLModel.byKey(key));
   }
 }

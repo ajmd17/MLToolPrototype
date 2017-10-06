@@ -2,7 +2,11 @@ import DataField from './DataField';
 import InputData from './InputData';
 
 export default class ModelSchema<DataFieldType extends DataField> {
-  constructor(public shape: { [key: string]: DataFieldType }) {}
+  shape: { [key: string]: DataFieldType };
+
+  constructor(shape: { [key: string]: DataFieldType } | { [key: string]: any }) {
+    this.shape = shape;
+  }
 
   validateSelf(): void {
     for (let key in this.shape) {

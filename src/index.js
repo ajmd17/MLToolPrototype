@@ -5,6 +5,7 @@ var bodyParser = require('body-parser');
 var mongodb = require('mongodb');
 var multer = require('multer');
 import * as multerS3 from 'multer-s3';
+import * as httpStatus from 'http-status-codes';
 
 var conversions = require('./conversions');
 var evaluate = require('./evaluate');
@@ -27,6 +28,8 @@ var upload = multer({
 });
 
 import SKLearnModel from './converters/SKLearnModel';
+import PMMLModel from './pmml/PMMLModel';
+import ModelSchema from './ModelSchema';
 
 mongodb.MongoClient.connect('mongodb://localhost:27017/mlmodeltesting', function (err, db) {
   if (err) {
@@ -51,7 +54,6 @@ mongodb.MongoClient.connect('mongodb://localhost:27017/mlmodeltesting', function
     db.collection('uploadedmodels').findOne({
       _id: mongodb.ObjectId(req.params.modelid)
     }).then(function (doc) {
-      console.log('doc = ', doc);
       res.render('demo', {
         model: doc
       });
@@ -63,7 +65,22 @@ mongodb.MongoClient.connect('mongodb://localhost:27017/mlmodeltesting', function
     });
   });
 
+  app.get('/upload', (req, res) => { res.render('upload'); });
+
   var apiRouter = express.Router();
+
+  apiRouter.get('/models/:modelid', function (req, res) {
+    db.collection('uploadedmodels').findOne({
+      _id: mongodb.ObjectId(req.params.modelid)
+    }).then(function (doc) {
+      res.json(doc);
+    }).catch(function (err) {
+      console.error('Failed to load model with id ' + req.params.modelid, err);
+      res.status(500).json({
+        error: 'Could not load model with id ' + req.params.modelid
+      });
+    });
+  });
   
   apiRouter.get('/uploads', function (req, res) {
     db.collection('uploadedmodels').find().sort({ timestamp: -1 }).toArray(function (err, docs) {
@@ -95,8 +112,6 @@ mongodb.MongoClient.connect('mongodb://localhost:27017/mlmodeltesting', function
       }
 
       return accum + lineParts.reduce(function (accum, part, i) {
-        console.log('part = ', part, i, lineParts.length);
-
         return accum + part + ((i != lineParts.length - 1) ? ',' : '');
       }, '') + '\n';
     }, '');
@@ -106,35 +121,20 @@ mongodb.MongoClient.connect('mongodb://localhost:27017/mlmodeltesting', function
     db.collection('uploadedmodels').findOne({
       _id: mongodb.ObjectId(req.params.modelid)
     }).then(function (doc) {
-      if (doc.filepath == null) {
-        throw new Error('filepath is null');
+      if (doc.key == null) {
+        throw new Error('key is null');
       }
 
-      // write to temp csv file
-      var modelFilepath = doc.filepath;
-      var csvFilepath =`./uploads/tmp/${req.params.modelid}-${Date.now()}.csv`;
+      const fixedCsv = fixCsv(req.body.csv);
+      const pmml = new PMMLModel(doc.schema, doc.key);
 
-      // req.body should be csv
-      var fixedCsv = fixCsv(req.body.csv);
-      console.log({fixedCsv});
-
-      fs.writeFile(csvFilepath, fixedCsv, { flag: 'w' }, function (err) {
-        if (err) {
-          console.error('Failed save temp csv file', err);
-          res.status(500).json({
-            error: 'Could not save input as csv'
-          });
-        } else {
-          evaluate(modelFilepath, csvFilepath).then(function (result) {
-            console.log({result});
-            res.json(result);
-          }).catch(function (err) {
-            console.error('Evaluation failed', err);
-            res.status(500).json({
-              error: 'Evaluation failed due to error: `' + err.message + '`.'
-            });
-          });
-        }
+      pmml.evaluate(fixedCsv).then((result) => {
+        res.json(result);
+      }).catch((err) => {
+        console.error('Evaluation failed', err);
+        res.status(500).json({
+          error: 'Evaluation failed due to error: `' + err.message + '`.'
+        });
       });
     }).catch(function (err) {
       console.error('Failed to load model with id ' + req.params.modelid, err);
@@ -146,7 +146,7 @@ mongodb.MongoClient.connect('mongodb://localhost:27017/mlmodeltesting', function
 
   var uploadRouter = express.Router();
 
-  uploadRouter.post('/', upload.single('model_file'), function (req, res) {
+  uploadRouter.post('/', upload.single('model_file'), (req, res) => {
     if (req.body.modeltype === undefined) {
       return res.status(400).json({
         error: 'modeltype not provided'
@@ -171,8 +171,7 @@ mongodb.MongoClient.connect('mongodb://localhost:27017/mlmodeltesting', function
             ...pmmlModel.serialize(),
             timestamp: new Date(),
           }).then(function (doc) {
-            console.log('Saved document: ', doc.ops[0]);
-            res.send();
+            res.json({ doc });
           }).catch(function (err) {
             console.error('Failed to store file record in db: ', err);
             res.status(500).json({
@@ -186,46 +185,25 @@ mongodb.MongoClient.connect('mongodb://localhost:27017/mlmodeltesting', function
           });
         });
 
-        return;
+        break;
 
-        var newFilepath = `uploads/${req.file.filename}.pmml`;
-        
-        console.log("req.file.buffer = ", req.file.buffer);
-        
-        conversions.sklearnPickle2PMML(filepath, newFilepath).then(function () {
+      case 'pmml':
+        PMMLModel.byKey(key).then((pmml) => {
           db.collection('uploadedmodels').insertOne({
             name: req.file.originalname,
-            filepath: newFilepath,
+            ...pmml.serialize(),
             timestamp: new Date(),
           }).then(function (doc) {
-            console.log('Saved document: ', doc.ops[0]);
-            res.send();
+            res.sendStatus(200);
           }).catch(function (err) {
-            console.error('Failed to store file record in db: ', err);
+            console.error('Storage of uploaded model failed:', err);
             res.status(500).json({
               error: 'Storage of uploaded model failed.'
             });
           });
         }).catch(function (err) {
-          console.error('Failed to convert pickle to PMML: ', err);
           res.status(500).json({
-            error: 'Pickle file could not be converted into PMML format.'
-          });
-        });
-
-        break;
-
-      case 'pmml':
-        db.collection('uploadedmodels').insertOne({
-          name: req.file.originalname,
-          filepath: filepath,
-          timestamp: new Date(),
-        }).then(function (doc) {
-          res.send();
-        }).catch(function (err) {
-          console.error('Failed to store file record in db: ', err);
-          res.status(500).json({
-            error: 'Storage of uploaded model failed.'
+            error: 'Failed to load model with key: "' + key + '".'
           });
         });
 

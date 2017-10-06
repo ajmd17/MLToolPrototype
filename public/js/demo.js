@@ -1,5 +1,7 @@
 (function ($) {
   $(document).ready(function () {
+
+
     function inputForm2Csv() {
       var csv = '';
 
@@ -58,11 +60,30 @@
     });
 
     // add starting cells
-    addColumn('A');
+    /*addColumn('A');
     addColumn('B');
     addColumn('C');
     addColumn('D');
-    addRow();
+    addRow();*/
+
+    $.ajax({
+      method: 'GET',
+      url: '/api/models/' + $('#evaluate-btn').attr('data-modelid'),
+      contentType: 'application/json'
+    }).done(function (res) {
+      var shape = res.schema.shape;
+      console.log('shape = ', shape);
+
+      for (var key in shape) {
+        if (Object.prototype.hasOwnProperty.call(shape, key)) {
+          addColumn(key);
+        }
+      }
+
+      addRow();
+    }).fail(function (err) {
+      alert('Could not load model : ' + err.message);
+    });
 
     $('#export-csv-btn').click(function () {
       var csvString = inputForm2Csv();
@@ -113,7 +134,7 @@
     });
 
     var spreadsheetData = Handsontable.helper.createSpreadsheetData(1000, 1000);
-    console.log({spreadsheetData});
+
     $('#input-table').handsontable({
       rowHeights: 23,
       rowHeaders: true,
@@ -140,9 +161,11 @@
       }).done(function (res) {
         $('#textarea-output').val(res);
 
+        var csvData = res.csvData;
+
         var data = [];
 
-        var lines = res.split('\n');
+        var lines = csvData.split('\n');
         for (var i = 0; i < lines.length; i++) {
           data.push(lines[i].split(','));
         }

@@ -1,5 +1,41 @@
 html, body {
+  margin: 0;
+  padding: 0;
   font-family: sans-serif;
+}
+
+nav#main-nav {
+  display: flex;
+  align-items: center;
+  padding: 30px 25px;
+  background-color: #1144AA;
+  border-bottom: 8px solid #355EAF;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+nav#main-nav h1 {
+  flex: 1;
+  margin: 0;
+  font-size: 30px;
+}
+nav#main-nav h1 a {
+  text-decoration: none;
+  color: #fff;
+}
+nav#main-nav .buttons {
+  align-self: flex-end;
+}
+nav#main-nav .buttons a {
+  display: block;
+  border-radius: 5px;
+  padding: 10px 20px;
+  font-size: 14px;
+  background-color: #5679BF;
+  color: #fff;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+nav#main-nav .buttons a:hover {
+  background-color: #355EAF;
 }
 
 .container {

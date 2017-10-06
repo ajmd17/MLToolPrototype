@@ -4,25 +4,9 @@
     <link rel="stylesheet" href="/css/styles.css" />
   </head>
   <body>
+    <%- include _nav.ejs %>
+
     <div class="container">
-      <div id="upload-form">
-        <h1>Upload Model</h1>
-        <hr />
-        <p>All formats will be converted to PMML</p>
-        <button id="upload-sklearn-pickle-btn" data-modeltype="sklearn_pickle">
-          Upload sklearn pickle file
-        </button>
-        <button id="upload-pmml-btn" data-modeltype="pmml">
-          Upload PMML file
-        </button>
-
-        <form id="main-upload-form" style="display:none;" method="post" action="upload" enctype="multipart/form-data">
-          <input type="hidden" name="modeltype" />
-          <input type="file" name="model_file" />
-          <input type="submit" value="Upload" />
-        </form>
-      </div>
-
       <div id="uploads-section">
         <h1>Uploads</h1>
         <hr />
@@ -32,8 +16,6 @@
       </div>
     </div>
 
-    <script src="/js/jquery-3.2.1.min.js" type="text/javascript"></script>
-    <script src="/js/moment.min.js" type="text/javascript"></script>
-    <script src="/js/app.js" type="text/javascript"></script>
+    <%- include _scripts.ejs %>
   </body>
 </html>
