@@ -116,6 +116,7 @@ input[type=file] {
   margin: 0;
   width: 100px;
   text-align: center;
+  font-size: 12px;
 }
 #input-form .rows div {
   min-height: 30px;
