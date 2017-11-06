@@ -71,7 +71,7 @@
       url: '/api/models/' + $('#evaluate-btn').attr('data-modelid'),
       contentType: 'application/json'
     }).done(function (res) {
-      var shape = res.schema.shape;
+      var shape = res.left.schema.shape;
       console.log('shape = ', shape);
 
       for (var key in shape) {

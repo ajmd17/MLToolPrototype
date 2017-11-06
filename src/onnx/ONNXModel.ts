@@ -4,8 +4,4 @@ import { JSONObject } from '../Typedefs';
 
 export default class ONNXModel extends Model<ONNXDataField> {
   public static SCHEMA_EXTRACTOR_LAMBDA = 'Testing';
-
-  merge(other: ONNXModel) {
-    return this;
-  }
 }

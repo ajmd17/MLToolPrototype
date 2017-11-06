@@ -30,6 +30,7 @@ var upload = multer({
 import SKLearnModel from './converters/SKLearnModel';
 import PMMLModel from './pmml/PMMLModel';
 import ModelSchema from './ModelSchema';
+import WeightedModel from './WeightedModel';
 
 mongodb.MongoClient.connect('mongodb://localhost:27017/mlmodeltesting', function (err, db) {
   if (err) {
@@ -121,14 +122,17 @@ mongodb.MongoClient.connect('mongodb://localhost:27017/mlmodeltesting', function
     db.collection('uploadedmodels').findOne({
       _id: mongodb.ObjectId(req.params.modelid)
     }).then(function (doc) {
-      if (doc.key == null) {
-        throw new Error('key is null');
-      }
-
       const fixedCsv = fixCsv(req.body.csv);
-      const pmml = new PMMLModel(doc.schema, doc.key);
 
-      pmml.evaluate(fixedCsv).then((result) => {
+      const model = new WeightedModel(
+        new PMMLModel(doc.left.schema, doc.left.key), 
+        (doc.right != null)
+          ? new PMMLModel(doc.right.schema, doc.right.key)
+          : null,
+        doc.weight
+      );
+
+      model.evaluate(fixedCsv).then((result) => {
         res.json(result);
       }).catch((err) => {
         console.error('Evaluation failed', err);
@@ -168,8 +172,8 @@ mongodb.MongoClient.connect('mongodb://localhost:27017/mlmodeltesting', function
         new SKLearnModel(key).getModel().then((pmmlModel) => {
           return db.collection('uploadedmodels').insertOne({
             name: req.file.originalname,
-            ...pmmlModel.serialize(),
             timestamp: new Date(),
+            ...(new WeightedModel(pmmlModel, null, 1.0).serialize())
           }).then(function (doc) {
             res.json({ doc });
           }).catch(function (err) {
@@ -191,8 +195,8 @@ mongodb.MongoClient.connect('mongodb://localhost:27017/mlmodeltesting', function
         PMMLModel.byKey(key).then((pmml) => {
           db.collection('uploadedmodels').insertOne({
             name: req.file.originalname,
-            ...pmml.serialize(),
             timestamp: new Date(),
+            ...(new WeightedModel(pmml, null, 1.0).serialize())
           }).then(function (doc) {
             res.sendStatus(200);
           }).catch(function (err) {

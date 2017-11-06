@@ -3,6 +3,7 @@ import * as httpStatus from 'http-status-codes';
 import * as assert from 'assert';
 
 import Model from '../Model';
+import WeightedModel from '../WeightedModel';
 import InputData from '../InputData';
 import S3StoredModel from '../S3StoredModel';
 import ModelSchema from '../ModelSchema';
@@ -12,12 +13,12 @@ import { JSONObject } from '../Typedefs';
 
 const lambda = new Lambda();
 
-export default class PMMLModel extends Model<PMMLDataField> {
+export default class PMMLModel extends Model<PMMLDataField> implements S3StoredModel {
   public static SCHEMA_EXTRACTOR_LAMBDA = 'Testing';
   public static EVALUATOR_LAMBDA = '';
 
-  constructor(schema, key) {
-    super(schema, key);
+  constructor(schema, public key: string) {
+    super(schema);
 
     if (!(schema instanceof ModelSchema)) {
       this.schema = new ModelSchema<PMMLDataField>(schema.shape);
@@ -69,12 +70,14 @@ export default class PMMLModel extends Model<PMMLDataField> {
   }
 
   evaluate(csvData: string): Promise<JSONObject> {
+    console.log('evaluate: ', csvData);
     return new Promise((resolve, reject) => {
       lambda.invoke({
         FunctionName: 'PMMLEvaluator',
         InvocationType: 'RequestResponse',
         Payload: JSON.stringify({ key: this.key, csvData: csvData })
       }, (err, data) => {
+        console.log({data});
         if (err) {
           reject(err);
         } else {
@@ -95,8 +98,11 @@ export default class PMMLModel extends Model<PMMLDataField> {
     });
   }
 
-  merge(other: PMMLModel) {
-    return this;
+  serialize() {
+    return {
+      ...super.serialize(),
+      key: this.key
+    };
   }
 
   static deserialize(obj: JSONObject) {

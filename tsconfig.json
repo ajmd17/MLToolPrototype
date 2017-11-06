@@ -9,7 +9,7 @@
     "module": "commonjs",
     "sourceMap": true,
     "allowJs": true,
-    "target": "es5",
+    "target": "es6",
     "removeComments": true,
     "rootDir": "./src",
     "outDir": "./lib"
